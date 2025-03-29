@@ -7,10 +7,17 @@ import { faSpinner } from "@fortawesome/free-solid-svg-icons/faSpinner";
 const TaskList: React.FC = () => {
   const { tasks, completeTask, deleteTask, resetTasks } = useTasks();
   const [loadingButton, setLoadingButton] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const randomTime = Math.random() * (4000 - 2000) + 2000;
 
   const handleReset = () => {
-    resetTasks();
+    if (window.confirm("Está seguro de eliminar?")) {
+      setIsLoading(true);
+      setTimeout(() => {
+        resetTasks();
+        setIsLoading(false);
+      }, 4000);
+    }
   };
 
   const handleComplete = (id: string) => {
@@ -35,12 +42,23 @@ const TaskList: React.FC = () => {
 
   return (
     <ul className="list-none p-0">
-      <button
-        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        onClick={handleReset}
-      >
-        <FontAwesomeIcon icon={faRedo} /> Reiniciar lista
-      </button>
+      {tasks.length > 0 && (
+        <button
+          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleReset}
+        >
+          {isLoading ? (
+            <>
+              <FontAwesomeIcon icon={faSpinner} spin /> Reiniciando lista
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faRedo} /> Reiniciar lista
+            </>
+          )}
+        </button>
+      )}
+
       {tasks.map((task) => (
         <li
           key={task.id}

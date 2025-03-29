@@ -70,10 +70,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const resetTasks = useCallback(() => {
-    if (window.confirm("Está seguro de resetear la lista?")) {
-      taskService.resetTasks();
-      setTasks([]);
-    }
+    taskService.resetTasks();
+    setTasks([]);
   }, [taskService]);
 
   return (
