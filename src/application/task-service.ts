@@ -14,16 +14,28 @@ export class TaskService {
     return newTask;
   }
 
-  completeTask(id: string): void {
-    const task = this.taskRepository.get(id);
-    if (task) {
-      task.status = true;
-      this.taskRepository.save(task);
+  completeTask(id: string): Promise<void> {
+    try {
+      const task = this.taskRepository.get(id);
+      if (task) {
+        task.status = true;
+        this.taskRepository.save(task);
+      }
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error completing task:", error);
+      return Promise.resolve();
     }
   }
 
-  deleteTask(id: string): void {
-    this.taskRepository.delete(id);
+  deleteTask(id: string): Promise<void> {
+    try {
+      this.taskRepository.delete(id);
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      return Promise.resolve();
+    }
   }
 
   getTasks(): Task[] {
