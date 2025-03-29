@@ -15,6 +15,7 @@ interface TaskContextType {
   addTask: (description: string) => void;
   completeTask: (id: string) => void;
   deleteTask: (id: string) => void;
+  resetTasks: () => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -68,8 +69,17 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     [taskService]
   );
 
+  const resetTasks = useCallback(() => {
+    if (window.confirm("Está seguro de resetear la lista?")) {
+      taskService.resetTasks();
+      setTasks([]);
+    }
+  }, [taskService]);
+
   return (
-    <TaskContext.Provider value={{ tasks, addTask, completeTask, deleteTask }}>
+    <TaskContext.Provider
+      value={{ tasks, addTask, completeTask, deleteTask, resetTasks }}
+    >
       {children}
     </TaskContext.Provider>
   );
