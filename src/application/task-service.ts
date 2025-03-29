@@ -41,4 +41,8 @@ export class TaskService {
   getTasks(): Task[] {
     return this.taskRepository.getAll();
   }
+
+  resetTasks(): void {
+    this.taskRepository.clearAll();
+  }
 }

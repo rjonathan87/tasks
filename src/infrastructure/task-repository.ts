@@ -5,6 +5,7 @@ export interface TaskRepository {
   delete(id: string): Promise<void>;
   get(id: string): Task | undefined;
   getAll(): Task[];
+  clearAll(): Promise<void>;
 }
 
 export class LocalStorageTaskRepository implements TaskRepository {
@@ -37,5 +38,11 @@ export class LocalStorageTaskRepository implements TaskRepository {
   getAll(): Task[] {
     const storedTasks = localStorage.getItem(this.localStorageKey);
     return storedTasks ? JSON.parse(storedTasks) : [];
+  }
+
+  clearAll(): Promise<void> {
+    return Promise.resolve().then(() => {
+      localStorage.removeItem(this.localStorageKey);
+    });
   }
 }
