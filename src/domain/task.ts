@@ -2,14 +2,16 @@ import { v4 as uuidv4 } from "uuid";
 
 export interface Task {
   id: string;
-  description: string;
-  createdAt: Date;
-  status: boolean;
+  title: string;
+  description?: string;
+  is_completed: boolean;
+  created_at: Date;
 }
 
-export const createTask = (description: string): Task => ({
+export const createTask = (title: string, description?: string): Task => ({
   id: uuidv4(),
+  title,
   description,
-  createdAt: new Date(),
-  status: false,
+  created_at: new Date(),
+  is_completed: false,
 });

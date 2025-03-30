@@ -1,48 +1,95 @@
 import { Task } from "../domain/task";
+import { supabase } from "./supabase-client";
 
 export interface TaskRepository {
   save(task: Task): Promise<void>;
   delete(id: string): Promise<void>;
-  get(id: string): Task | undefined;
-  getAll(): Task[];
+  get(id: string): Promise<Task | null>;
+  getAll(): Promise<Task[]>;
   clearAll(): Promise<void>;
 }
 
-export class LocalStorageTaskRepository implements TaskRepository {
-  private readonly localStorageKey = "tasks";
+export class SupabaseTaskRepository implements TaskRepository {
+  private readonly tableName = "tasks";
 
-  save(task: Task): Promise<void> {
-    return Promise.resolve().then(() => {
-      const tasks = this.getAll();
-      const existingIndex = tasks.findIndex((t) => t.id === task.id);
-      if (existingIndex > -1) {
-        tasks[existingIndex] = task;
-      } else {
-        tasks.push(task);
-      }
-      localStorage.setItem(this.localStorageKey, JSON.stringify(tasks));
+  async save(task: Task): Promise<void> {
+    const { error } = await supabase.from(this.tableName).upsert({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      is_completed: task.is_completed,
+      created_at: task.created_at,
     });
+
+    if (error) {
+      console.error("Error al guardar la tarea:", error);
+      throw new Error(`Failed to save task: ${error.message}`);
+    }
   }
 
-  delete(id: string): Promise<void> {
-    return Promise.resolve().then(() => {
-      const tasks = this.getAll().filter((task) => task.id !== id);
-      localStorage.setItem(this.localStorageKey, JSON.stringify(tasks));
-    });
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from(this.tableName)
+      .delete()
+      .match({ id });
+
+    if (error) {
+      console.error("Error al eliminar la tarea:", error);
+      throw new Error(`Failed to delete task: ${error.message}`);
+    }
   }
 
-  get(id: string): Task | undefined {
-    return this.getAll().find((task) => task.id === id);
+  async get(id: string): Promise<Task | null> {
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Error al obtener la tarea:", error);
+      throw new Error(`Failed to get task: ${error.message}`);
+    }
+
+    return data
+      ? {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          is_completed: data.is_completed,
+          created_at: data.created_at,
+        }
+      : null;
   }
 
-  getAll(): Task[] {
-    const storedTasks = localStorage.getItem(this.localStorageKey);
-    return storedTasks ? JSON.parse(storedTasks) : [];
+  async getAll(): Promise<Task[]> {
+    const { data, error } = await supabase
+      .from(this.tableName)
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error al obtener las tareas:", error);
+      throw new Error(`Failed to fetch tasks: ${error.message}`);
+    }
+
+    return data
+      ? data.map((task) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          is_completed: task.is_completed,
+          created_at: task.created_at,
+        }))
+      : [];
   }
 
-  clearAll(): Promise<void> {
-    return Promise.resolve().then(() => {
-      localStorage.removeItem(this.localStorageKey);
-    });
+  async clearAll(): Promise<void> {
+    console.warn(
+      "La operación clearAll puede ser ineficiente para tablas grandes."
+    );
+    const tasks = await this.getAll();
+    const deletePromises = tasks.map((task) => this.delete(task.id));
+    await Promise.all(deletePromises);
   }
 }

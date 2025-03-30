@@ -1,53 +1,72 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTasks } from "../task-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons/faSpinner";
+import { faPlus, faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const TaskForm: React.FC = () => {
   const { addTask } = useTasks();
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isLoading && inputRef.current) {
-      inputRef.current.focus();
+    if (!isSubmitting && titleInputRef.current) {
+      titleInputRef.current.focus();
     }
-  }, [isLoading]);
+  }, [isSubmitting]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (description.trim()) {
-      setIsLoading(true);
-      // para que no siempre sean los mismos segundos
-      const randomTime = Math.random() * (4000 - 2000) + 2000;
-      setTimeout(() => {
-        addTask(description);
-        setDescription("");
-        setIsLoading(false);
-      }, randomTime);
+
+    if (!title.trim() || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addTask(title.trim(), description.trim() || undefined);
+      setTitle("");
+      setDescription("");
+    } catch (err) {
+      console.error("Error al agregar la tarea en el formulario:", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="sm:flex items-center">
+    <form onSubmit={handleSubmit} className="mb-4">
+      <div className="flex flex-col gap-2 mb-2">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Título de la tarea (requerido)"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          disabled={isSubmitting}
+          ref={titleInputRef}
+          required
+        />
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Agregar nueva"
+          placeholder="Descripción (opcional)"
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          disabled={isLoading}
-          ref={inputRef}
+          disabled={isSubmitting}
         />
+      </div>
+
+      <div className="text-right">
+        {" "}
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          disabled={isLoading}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+          disabled={isSubmitting || !title.trim()}
         >
-          {isLoading ? (
+          {isSubmitting ? (
             <FontAwesomeIcon icon={faSpinner} spin />
           ) : (
             <FontAwesomeIcon icon={faPlus} />
