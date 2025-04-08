@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTasks } from "../task-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSave, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { Task } from "../../domain/task";
 
-const TaskForm: React.FC = () => {
-  const { addTask } = useTasks();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+interface TaskFormProps {
+  task?: Task;
+  onClose?: () => void;
+}
+
+const TaskForm: React.FC<TaskFormProps> = ({ task, onClose }) => {
+  const { addTask, editTask } = useTasks();
+  const [title, setTitle] = useState(task?.title || "");
+  const [description, setDescription] = useState(task?.description || "");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -26,9 +32,21 @@ const TaskForm: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await addTask(title.trim(), description.trim() || undefined);
+      if (task) {
+        // Editing existing task
+        const updatedTask: Task = {
+          ...task,
+          title: title.trim(),
+          description: description.trim(),
+        };
+        await editTask(updatedTask);
+      } else {
+        // Adding new task
+        await addTask(title.trim(), description.trim() || undefined);
+      }
       setTitle("");
       setDescription("");
+      onClose?.(); // Close the form after submitting
     } catch (err) {
       console.error("Error al agregar la tarea en el formulario:", err);
     } finally {
@@ -68,6 +86,8 @@ const TaskForm: React.FC = () => {
         >
           {isSubmitting ? (
             <FontAwesomeIcon icon={faSpinner} spin />
+          ) : task ? (
+            <FontAwesomeIcon icon={faSave} />
           ) : (
             <FontAwesomeIcon icon={faPlus} />
           )}

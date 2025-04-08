@@ -22,6 +22,7 @@ interface TaskContextType {
   deleteTask: (id: string) => Promise<void>;
   resetTasks: () => Promise<void>;
   fetchTasks: () => Promise<void>;
+  editTask: (task: Task) => Promise<void>;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -164,6 +165,23 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [taskService]);
 
+  const editTask = useCallback(
+    async (task: Task) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        await taskService.editTask(task);
+        await fetchTasks();
+      } catch (err: unknown) {
+        console.error("Error al editar la tarea:", err);
+        setError(err instanceof Error ? err.message : "Failed to edit task");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [taskService, fetchTasks]
+  );
+
   const contextValue = useMemo(
     () => ({
       tasks,
@@ -174,6 +192,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
       deleteTask,
       resetTasks,
       fetchTasks,
+      editTask,
     }),
     [
       tasks,
@@ -184,6 +203,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
       deleteTask,
       resetTasks,
       fetchTasks,
+      editTask,
     ]
   );
 

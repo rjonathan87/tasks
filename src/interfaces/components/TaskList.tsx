@@ -3,16 +3,20 @@ import { useTasks } from "../task-context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
+  faEdit,
   faTrash,
   faRedo,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
+import TaskForm from "./TaskForm";
+import { Task } from "../../domain/task";
 
 const TaskList: React.FC = () => {
   const { tasks, completeTask, deleteTask, resetTasks, isLoading, error } =
     useTasks();
 
   const [loadingButtonId, setLoadingButtonId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [isResetting, setIsResetting] = useState(false);
 
@@ -111,21 +115,32 @@ const TaskList: React.FC = () => {
             >
               {" "}
               {task.title}
+              <p className="text-gray-500 text-xs">{task.description}</p>
             </span>
+
             <div className="flex gap-2">
               {" "}
               {!task.is_completed && (
-                <button
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
-                  onClick={() => handleComplete(task.id)}
-                  disabled={loadingButtonId === task.id || isResetting}
-                >
-                  {loadingButtonId === task.id ? (
-                    <FontAwesomeIcon icon={faSpinner} spin />
-                  ) : (
-                    <FontAwesomeIcon icon={faCheck} />
-                  )}
-                </button>
+                <>
+                  <button
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
+                    onClick={() => setEditingTask(task)}
+                    disabled={loadingButtonId === task.id || isResetting}
+                  >
+                    <FontAwesomeIcon icon={faEdit} />
+                  </button>
+                  <button
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
+                    onClick={() => handleComplete(task.id)}
+                    disabled={loadingButtonId === task.id || isResetting}
+                  >
+                    {loadingButtonId === task.id ? (
+                      <FontAwesomeIcon icon={faSpinner} spin />
+                    ) : (
+                      <FontAwesomeIcon icon={faCheck} />
+                    )}
+                  </button>
+                </>
               )}
               <button
                 className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded disabled:opacity-50"
@@ -142,6 +157,9 @@ const TaskList: React.FC = () => {
           </li>
         ))}
       </ul>
+      {editingTask && (
+        <TaskForm task={editingTask} onClose={() => setEditingTask(null)} />
+      )}
     </div>
   );
 };

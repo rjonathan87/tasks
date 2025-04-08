@@ -76,4 +76,13 @@ export class TaskService {
       )
       .subscribe();
   }
+
+  async editTask(task: Task): Promise<void> {
+    try {
+      await this.taskRepository.save(task);
+    } catch (error) {
+      console.error("Error al editar la tarea:", error);
+      throw error;
+    }
+  }
 }
